@@ -1,0 +1,31 @@
+name: Deploy frontend
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "fitness-web/**"
+      - ".github/workflows/deploy-frontend.yml"
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS creds
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build & push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./fitness-web
+          file: ./fitness-web/dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ steps.ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_FRONTEND }}:${{ github.sha }}
+            ${{ steps.ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_FRONTEND }}:latest
