@@ -10,15 +10,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Preflight debug
+        run: |
+          echo "Ref: $GITHUB_REF"
+          echo "Commit: $GITHUB_SHA"
+          echo "Listing backend:"
+          ls -l backend || true
+          echo "Check Dockerfile:"
+          ls -l backend/Dockerfile || echo "Dockerfile missing"
+          echo "Secrets presence (not printing values):"
+          if [ -n "${AWS_ACCESS_KEY_ID}" ]; then echo "AWS_ACCESS_KEY_ID present"; else echo "AWS_ACCESS_KEY_ID MISSING"; fi
+          if [ -n "${AWS_SECRET_ACCESS_KEY}" ]; then echo "AWS_SECRET_ACCESS_KEY present"; else echo "AWS_SECRET_ACCESS_KEY MISSING"; fi
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
       - name: Configure AWS creds
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
+
+      - name: STS identity debug
+        run: aws sts get-caller-identity || echo "STS call failed"
+
       - name: Login to ECR
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Show image tags
+        run: |
+          echo "Registry: ${{ steps.ecr.outputs.registry }}"
+          echo "Repo: ${{ secrets.ECR_REPOSITORY_BACKEND }}"
+          echo "SHA tag: ${{ steps.ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_BACKEND }}:${{ github.sha }}"
+          echo "Latest tag: ${{ steps.ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_BACKEND }}:latest"
+
       - name: Build & push
         uses: docker/build-push-action@v6
         with:
@@ -29,3 +57,6 @@ jobs:
           tags: |
             ${{ steps.ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_BACKEND }}:${{ github.sha }}
             ${{ steps.ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_BACKEND }}:latest
+
+      - name: List local images
+        run: docker images | head
