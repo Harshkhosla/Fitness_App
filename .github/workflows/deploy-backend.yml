@@ -60,3 +60,37 @@ jobs:
 
       - name: List local images
         run: docker images | head
+      
+      - name: Prepare task definition
+        run: |
+          IMAGE="${{ steps.ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_BACKEND }}:${{ github.sha }}"
+          echo "Using image: $IMAGE"
+          cp backend/taskdef-base.json taskdef-work.json
+          sed -i "s|REPLACE_IMAGE|$IMAGE|" taskdef-work.json
+          sed -i "s|REPLACE_FAMILY|${{ secrets.ECS_TASK_FAMILY }}|" taskdef-work.json
+          sed -i "s|REPLACE_EXECUTION_ROLE_ARN|${{ secrets.ECS_EXECUTION_ROLE_ARN }}|" taskdef-work.json
+          sed -i "s|REPLACE_TASK_ROLE_ARN|${{ secrets.ECS_TASK_ROLE_ARN }}|" taskdef-work.json
+          echo 'Final task definition:'
+          cat taskdef-work.json
+
+      - name: Register task definition
+        id: register
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          RESP=$(aws ecs register-task-definition --cli-input-json file://taskdef-work.json)
+          echo "$RESP" | jq '.taskDefinition.revision'
+          REV=$(echo "$RESP" | jq -r '.taskDefinition.revision')
+          echo "revision=$REV" >> $GITHUB_OUTPUT
+
+      - name: Update ECS service
+        run: |
+          echo "Updating ecs service to new task revision"
+          aws ecs update-service \
+            --cluster "${{ secrets.ECS_CLUSTER_NAME }}" \
+            --service "${{ secrets.ECS_SERVICE_NAME_BACKEND }}" \
+            --task-definition "${{ secrets.ECS_TASK_FAMILY }}:${{ steps.register.outputs.revision }}"
+
+      - name: Wait for service stability
+        run: |
+          aws ecs wait services-stable --cluster "${{ secrets.ECS_CLUSTER_NAME }}" --services "${{ secrets.ECS_SERVICE_NAME_BACKEND }}"
+          echo "Service is stable."
