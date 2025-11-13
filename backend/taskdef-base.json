@@ -11,7 +11,7 @@
       "name": "fitness-backend",
       "image": "REPLACE_IMAGE",
       "essential": true,
-      "portMappings": [ { "containerPort": 3000, "protocol": "tcp" } ],
+      "portMappings": [ { "containerPort": 4000, "protocol": "tcp" } ],
       "environment": [
         { "name": "NODE_ENV", "value": "production" }
       ],
