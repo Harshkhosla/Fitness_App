@@ -61,17 +61,35 @@ jobs:
       - name: List local images
         run: docker images | head
       
-      - name: Prepare task definition
+      - name: Prepare task definition (jq)
         run: |
           IMAGE="${{ steps.ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_BACKEND }}:${{ github.sha }}"
+          FAMILY="${{ secrets.ECS_TASK_FAMILY }}"
+          EXEC_ROLE="${{ secrets.ECS_EXECUTION_ROLE_ARN }}"
+          TASK_ROLE="${{ secrets.ECS_TASK_ROLE_ARN }}"
           echo "Using image: $IMAGE"
-          cp backend/taskdef-base.json taskdef-work.json
-          sed -i "s|REPLACE_IMAGE|$IMAGE|" taskdef-work.json
-          sed -i "s|REPLACE_FAMILY|${{ secrets.ECS_TASK_FAMILY }}|" taskdef-work.json
-          sed -i "s|REPLACE_EXECUTION_ROLE_ARN|${{ secrets.ECS_EXECUTION_ROLE_ARN }}|" taskdef-work.json
-          sed -i "s|REPLACE_TASK_ROLE_ARN|${{ secrets.ECS_TASK_ROLE_ARN }}|" taskdef-work.json
+          sudo apt-get update && sudo apt-get install -y jq
+          jq \
+            --arg img "$IMAGE" \
+            --arg fam "$FAMILY" \
+            --arg exec "$EXEC_ROLE" \
+            --arg task "$TASK_ROLE" \
+            '.family=$fam
+             | .executionRoleArn=$exec
+             | .taskRoleArn=$task
+             | .containerDefinitions[0].image=$img
+             | .containerDefinitions[0].logConfiguration.options["awslogs-group"]=("/ecs/"+$fam)
+            ' backend/taskdef-base.json > taskdef-work.json
           echo 'Final task definition:'
           cat taskdef-work.json
+
+      - name: Validate task definition values
+        run: |
+          echo "Checking executionRoleArn present..."
+          jq -e '.executionRoleArn | select(length>0)' taskdef-work.json >/dev/null || { echo "ERROR: executionRoleArn missing"; exit 1; }
+          echo "Checking image present..."
+          jq -e '.containerDefinitions[0].image | select(length>0)' taskdef-work.json >/dev/null || { echo "ERROR: image missing"; exit 1; }
+          echo "OK"
 
       - name: Register task definition
         id: register
