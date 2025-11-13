@@ -8,7 +8,7 @@
   "taskRoleArn": "REPLACE_TASK_ROLE_ARN",
   "containerDefinitions": [
     {
-      "name": "backend",
+      "name": "fitness-app-backend",
       "image": "REPLACE_IMAGE",
       "essential": true,
       "portMappings": [ { "containerPort": 3000, "protocol": "tcp" } ],
