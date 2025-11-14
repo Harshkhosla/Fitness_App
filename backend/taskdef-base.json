@@ -7,7 +7,12 @@
   "containerDefinitions": [
     {
       "cpu": 0,
-      "environment": [],
+      "environment": [
+        {
+          "name": "NODE_ENV",
+          "value": "production"
+        }
+      ],
       "environmentFiles": [],
       "essential": true,
       "image": "REPLACE_IMAGE",
@@ -15,7 +20,6 @@
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/fitness-app-backend",
-          "awslogs-create-group": "true",
           "awslogs-region": "ap-south-1",
           "awslogs-stream-prefix": "ecs"
         },
@@ -37,11 +41,11 @@
       "volumesFrom": []
     }
   ],
-  "cpu": "1024",
+  "cpu": "256",
   "enableFaultInjection": false,
   "executionRoleArn": "arn:aws:iam::974726672618:role/ecsTaskExecutionRole",
   "family": "fitness-app-backend",
-  "memory": "3072",
+  "memory": "512",
   "networkMode": "awsvpc",
   "placementConstraints": [],
   "registeredAt": "2025-11-12T15:07:38.722Z",
