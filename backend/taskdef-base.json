@@ -1,28 +1,45 @@
 {
-  "family": "REPLACE_FAMILY",
-  "networkMode": "awsvpc",
-  "requiresCompatibilities": ["FARGATE"],
-  "cpu": "256",
-  "memory": "512",
-  "executionRoleArn": "REPLACE_EXECUTION_ROLE_ARN",
-  "taskRoleArn": "REPLACE_TASK_ROLE_ARN",
+  "family": "fitness-app-backend",
+    "taskRoleArn": "arn:aws:iam::974726672618:role/ecsBackendTaskRole",
+    "executionRoleArn": "arn:aws:iam::974726672618:role/ecsTaskExecutionRole",
+    "networkMode": "awsvpc",
+    "volumes": [],
+    "placementConstraints": [],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "256",
+    "memory": "512",
   "containerDefinitions": [
-    {
-      "name": "fitness-backend",
-      "image": "REPLACE_IMAGE",
-      "essential": true,
-      "portMappings": [ { "containerPort": 4000, "protocol": "tcp" } ],
-      "environment": [
-        { "name": "NODE_ENV", "value": "production" }
-      ],
-      "logConfiguration": {
-        "logDriver": "awslogs",
-        "options": {
-          "awslogs-group": "/ecs/REPLACE_FAMILY",
-          "awslogs-region": "ap-south-1",
-          "awslogs-stream-prefix": "ecs"
+          {
+            "cpu": 0,
+            "environment": [
+                {
+                    "name": "NODE_ENV",
+                    "value": "production"
+                }
+            ],
+            "essential": true,
+            "image": "REPLACE_IMAGE",
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/fitness-app-backend",
+                    "awslogs-region": "ap-south-1",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            },
+            "mountPoints": [],
+            "name": "fitness-backend",
+            "portMappings": [
+                {
+                    "containerPort": 4000,
+                    "hostPort": 4000,
+                    "protocol": "tcp"
+                }
+            ],
+            "systemControls": [],
+            "volumesFrom": []
         }
-      }
-    }
   ]
 }
