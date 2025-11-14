@@ -1,45 +1,72 @@
 {
   "family": "fitness-app-backend",
-    "taskRoleArn": "arn:aws:iam::974726672618:role/ecsBackendTaskRole",
-    "executionRoleArn": "arn:aws:iam::974726672618:role/ecsTaskExecutionRole",
-    "networkMode": "awsvpc",
-    "volumes": [],
-    "placementConstraints": [],
-    "requiresCompatibilities": [
-        "FARGATE"
-    ],
-    "cpu": "256",
-    "memory": "512",
+  "taskRoleArn": "arn:aws:iam::974726672618:role/ecsBackendTaskRole",
+  "executionRoleArn": "arn:aws:iam::974726672618:role/ecsTaskExecutionRole",
+  "networkMode": "awsvpc",
+
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+
+  "cpu": "1024",
+  "memory": "3072",
+
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+
   "containerDefinitions": [
-          {
-            "cpu": 0,
-            "environment": [
-                {
-                    "name": "NODE_ENV",
-                    "value": "production"
-                }
-            ],
-            "essential": true,
-            "image": "REPLACE_IMAGE",
-            "logConfiguration": {
-                "logDriver": "awslogs",
-                "options": {
-                    "awslogs-group": "/ecs/fitness-app-backend",
-                    "awslogs-region": "ap-south-1",
-                    "awslogs-stream-prefix": "ecs"
-                }
-            },
-            "mountPoints": [],
-            "name": "fitness-backend",
-            "portMappings": [
-                {
-                    "containerPort": 4000,
-                    "hostPort": 4000,
-                    "protocol": "tcp"
-                }
-            ],
-            "systemControls": [],
-            "volumesFrom": []
+    {
+      "name": "fitness-backend",
+      "image": "REPLACE_IMAGE",
+      "essential": true,
+      "cpu": 0,
+
+      "environment": [
+        {
+          "name": "NODE_ENV",
+          "value": "production"
         }
+      ],
+      "environmentFiles": [],
+
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/fitness-app-backend",
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      },
+
+      "portMappings": [
+        {
+          "containerPort": 4000,
+          "hostPort": 4000,
+          "protocol": "tcp",
+          "appProtocol": "http",
+          "name": "port_4000"
+        }
+      ],
+
+      "mountPoints": [],
+      "volumesFrom": [],
+      "systemControls": [],
+      "ulimits": []
+    }
+  ],
+
+  "volumes": [],
+
+  "placementConstraints": [],
+
+  "requiresAttributes": [
+    { "name": "com.amazonaws.ecs.capability.logging-driver.awslogs" },
+    { "name": "ecs.capability.execution-role-awslogs" },
+    { "name": "com.amazonaws.ecs.capability.ecr-auth" },
+    { "name": "ecs.capability.execution-role-ecr-pull" },
+    { "name": "ecs.capability.task-eni" }
   ]
 }
